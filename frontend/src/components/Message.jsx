@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {useDispatch, useSelector} from "react-redux";
 import axios from 'axios';
 import EmojiPicker from 'emoji-picker-react';
-import ProfileAvatar, { resolveImageUrl } from './ProfileAvatar';
+import { resolveImageUrl } from './ProfileAvatar';
 import { updateMessageReaction } from '../redux/messageSlice';
 import { updateConversationLastMessage } from '../redux/userSlice';
 import { BASE_URL } from '..';
@@ -54,7 +54,7 @@ const Message = ({message}) => {
     const [showInteractionMenu, setShowInteractionMenu] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const dispatch = useDispatch();
-    const {authUser, selectedUser} = useSelector((store) => store.user);
+    const {authUser} = useSelector((store) => store.user);
     const reactionSummary = useMemo(() => buildReactionSummary(message?.reactions || []), [message?.reactions]);
 
     useEffect(() => {
@@ -149,13 +149,7 @@ const Message = ({message}) => {
 
     return (
         <div ref={scroll} className={`flex w-full ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
-            <div ref={interactionRef} className={`relative flex max-w-[78%] items-end gap-1.5 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
-                <div className='avatar shrink-0'>
-                    <div className='w-8 rounded-full'>
-                        <ProfileAvatar user={isOwnMessage ? authUser : selectedUser} />
-                    </div>
-                </div>
-
+            <div ref={interactionRef} className='relative flex max-w-[78%] items-end'>
                 <div className={`flex min-w-0 max-w-full flex-col ${isOwnMessage ? 'items-end' : 'items-start'}`}>
                     <div
                         onDoubleClick={handleMessageDoubleClick}

@@ -18,7 +18,7 @@ const getContactIds = async (userId) => {
         .filter((participantId) => participantId !== String(userId)))];
 };
 
-const populateStatusOwner = (query) => query.populate("userId", "fullName username profilePhoto");
+const populateStatusOwner = (query) => query.populate("userId", "fullName username profilePhoto gender");
 const isOwner = (status, userId) => String(status.userId?._id || status.userId) === String(userId);
 const statusForViewer = (status, userId) => {
     const plainStatus = status.toObject ? status.toObject() : { ...status };
@@ -205,13 +205,14 @@ export const recordStatusView = async (req, res) => {
             return res.status(200).json({ viewed: false });
         }
 
-        const viewer = await User.findById(req.id).select("fullName username profilePhoto").lean();
+        const viewer = await User.findById(req.id).select("fullName username profilePhoto gender").lean();
         const viewerRecord = {
             userId: {
                 _id: viewer._id,
                 fullName: viewer.fullName,
                 username: viewer.username,
-                profilePhoto: viewer.profilePhoto
+                profilePhoto: viewer.profilePhoto,
+                gender: viewer.gender
             },
             viewedAt
         };
@@ -237,7 +238,7 @@ export const getStatusViewers = async (req, res) => {
         const status = await Status.findOne({
             _id: statusId,
             expiresAt: { $gt: new Date() }
-        }).populate("viewers.userId", "fullName username profilePhoto");
+        }).populate("viewers.userId", "fullName username profilePhoto gender");
         if (!status) return res.status(404).json({ message: "Active status not found." });
         if (!isOwner(status, req.id)) {
             return res.status(403).json({ message: "Only the status owner can view its viewers." });

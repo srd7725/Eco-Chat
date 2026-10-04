@@ -7,6 +7,7 @@ import {useSelector} from "react-redux";
  
 const Sidebar = ({ onOpenSettings, onLogout }) => {
     const [search, setSearch] = useState("");
+    const [isStatusOpen, setIsStatusOpen] = useState(false);
     const {otherUsers} = useSelector(store=>store.user);
 
     const searchSubmitHandler = (e) => {
@@ -29,14 +30,25 @@ const Sidebar = ({ onOpenSettings, onLogout }) => {
                     <BiSearchAlt2 className='h-5 w-5 outline-none'/>
                 </button>
             </form>
-            <div className='mt-3'>
-                <StatusFeature />
-            </div>
-            <OtherUsers search={search} />
-            <div className='mt-3 flex gap-2 border-t border-white/10 pt-3'>
-                <button onClick={onOpenSettings} className='btn btn-sm flex-1'>Settings</button>
-                <button onClick={onLogout} className='btn btn-sm flex-1'>Logout</button>
-            </div>
+            {isStatusOpen ? (
+                <div className='mt-3 flex min-h-0 flex-1 flex-col overflow-hidden'>
+                    <StatusFeature
+                        isOpen
+                        onClose={() => setIsStatusOpen(false)}
+                    />
+                </div>
+            ) : (
+                <>
+                    <div className='mt-3'>
+                        <StatusFeature onOpen={() => setIsStatusOpen(true)} />
+                    </div>
+                    <OtherUsers search={search} />
+                    <div className='mt-3 flex gap-2 border-t border-white/10 pt-3'>
+                        <button onClick={onOpenSettings} className='btn btn-sm flex-1'>Settings</button>
+                        <button onClick={onLogout} className='btn btn-sm flex-1'>Logout</button>
+                    </div>
+                </>
+            )}
         </div>
     )
 }
