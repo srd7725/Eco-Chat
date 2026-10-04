@@ -7,8 +7,20 @@ import multer from "multer";
 export const uploadsDirectory = fileURLToPath(new URL("../uploads/", import.meta.url));
 export const profileUploadsDirectory = path.join(uploadsDirectory, "profile");
 const statusUploadsDirectory = path.join(uploadsDirectory, "status");
+export const messageUploadsDirectory = path.join(uploadsDirectory, "message");
 
 const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const allowedDocumentMimeTypes = new Set([
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/plain",
+    "application/rtf"
+]);
+const allowedAttachmentMimeTypes = new Set([...allowedMimeTypes, ...allowedDocumentMimeTypes]);
+const dangerousExtensions = new Set([".exe", ".bat", ".cmd", ".ps1", ".vbs", ".js", ".jar", ".scr", ".com"]);
 
 const parser = multer({
     storage: multer.memoryStorage(),
@@ -21,6 +33,21 @@ const parser = multer({
     }
 });
 
+const attachmentParser = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024, files: 1, fields: 6, fieldSize: 2048 },
+    fileFilter: (req, file, callback) => {
+        const extension = path.extname(file.originalname).toLowerCase();
+        if (dangerousExtensions.has(extension)) {
+            return callback(new Error("This file type is not allowed."));
+        }
+        if (!allowedAttachmentMimeTypes.has(file.mimetype) && !allowedAttachmentMimeTypes.has(`application/${extension.slice(1)}`)) {
+            return callback(new Error("This file type is not supported."));
+        }
+        callback(null, true);
+    }
+});
+
 export const imageUpload = (fieldName) => (req, res, next) => {
     parser.single(fieldName)(req, res, (error) => {
         if (error) {
@@ -28,6 +55,19 @@ export const imageUpload = (fieldName) => (req, res, next) => {
                 message: error.code === "LIMIT_FILE_SIZE"
                     ? "Image must be 4 MB or smaller."
                     : error.message || "Unable to upload image."
+            });
+        }
+        next();
+    });
+};
+
+export const messageUpload = (fieldName) => (req, res, next) => {
+    attachmentParser.single(fieldName)(req, res, (error) => {
+        if (error) {
+            return res.status(400).json({
+                message: error.code === "LIMIT_FILE_SIZE"
+                    ? "Attachment must be 10 MB or smaller."
+                    : error.message || "Unable to upload attachment."
             });
         }
         next();
@@ -72,13 +112,29 @@ export const storeUploadedImage = async (file, category = "profile") => {
     return `/uploads/${category}/${filename}`;
 };
 
+export const storeUploadedMessageFile = async (file) => {
+    if (!file) return null;
+    const extension = path.extname(file.originalname || "").toLowerCase();
+    const mimeType = file.mimetype || "application/octet-stream";
+    const allowedExtensions = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".txt"]);
+    if (dangerousExtensions.has(extension) || !allowedExtensions.has(extension)) {
+        const error = new Error("This file type is not supported.");
+        error.statusCode = 400;
+        throw error;
+    }
+    await fs.mkdir(messageUploadsDirectory, { recursive: true });
+    const filename = `${randomUUID()}${extension || ".bin"}`;
+    await fs.writeFile(path.join(messageUploadsDirectory, filename), file.buffer, { flag: "wx" });
+    return `/uploads/message/${filename}`;
+};
+
 export const getUploadedImageFilePath = (imagePath) => {
     if (typeof imagePath !== "string") return null;
     const match = imagePath.match(
-        /^\/uploads\/(profile|status)\/([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:jpg|png|webp))$/i
+        /^\/uploads\/(profile|status|message)\/([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:jpg|png|webp|gif|pdf|doc|docx|xls|xlsx|txt|bin))$/i
     );
     if (!match) return null;
-    const directory = match[1] === "profile" ? profileUploadsDirectory : statusUploadsDirectory;
+    const directory = match[1] === "profile" ? profileUploadsDirectory : match[1] === "status" ? statusUploadsDirectory : messageUploadsDirectory;
     return path.join(directory, match[2]);
 };
 

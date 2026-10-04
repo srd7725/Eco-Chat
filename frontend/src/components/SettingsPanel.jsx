@@ -11,16 +11,26 @@ const MAX_PHOTO_SIZE = 4 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const SECTIONS = ['Profile', 'Privacy', 'Account'];
 
-const SettingsPanel = ({ onClose, onLogout }) => {
+const SettingsPanel = ({ onClose, onBack, onLogout }) => {
     const authUser = useSelector((store) => store.user.authUser);
     const dispatch = useDispatch();
     const fileInputRef = useRef(null);
+    const panelRef = useRef(null);
     const [section, setSection] = useState('Profile');
     const [fullName, setFullName] = useState(authUser?.fullName || '');
     const [username, setUsername] = useState(authUser?.username || '');
     const [photoFile, setPhotoFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        const handleEscape = (event) => {
+            if (event.key === 'Escape') onClose();
+        };
+
+        window.addEventListener('keydown', handleEscape);
+        return () => window.removeEventListener('keydown', handleEscape);
+    }, [onClose]);
 
     useEffect(() => {
         if (!photoFile) {
@@ -94,21 +104,27 @@ const SettingsPanel = ({ onClose, onLogout }) => {
     };
 
     return (
-        <div className='fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-3'>
-            <section
-                role='dialog'
-                aria-modal='true'
-                aria-labelledby='settings-heading'
-                className='flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-white/20 bg-zinc-900/95 text-white shadow-2xl backdrop-blur-xl'
-            >
-                <header className='flex items-center justify-between border-b border-white/10 px-5 py-4'>
-                    <h2 id='settings-heading' className='text-xl font-semibold'>Settings</h2>
-                    <button type='button' onClick={onClose} aria-label='Close settings' className='rounded-md px-3 py-1 hover:bg-white/10'>
-                        ✕
-                    </button>
-                </header>
+        <section
+            ref={panelRef}
+            aria-labelledby='settings-heading'
+            className='flex h-full w-full flex-col overflow-hidden bg-zinc-900/95 text-white'
+        >
+            <header className='grid grid-cols-[1fr_auto_1fr] items-center border-b border-white/10 px-4 py-3 sm:px-6 sm:py-4'>
+                <button
+                    type='button'
+                    onClick={onBack || onClose}
+                    className='flex w-fit items-center gap-2 rounded-md px-2 py-1 text-left text-sm text-slate-200 hover:bg-white/10'
+                >
+                    <span aria-hidden='true'>←</span>
+                    <span>Back to Chats</span>
+                </button>
+                <h2 id='settings-heading' className='text-center text-xl font-semibold'>Settings</h2>
+                <button type='button' onClick={onClose} aria-label='Close settings' className='justify-self-end rounded-md px-2 py-1 text-xl leading-none hover:bg-white/10'>
+                    ✕
+                </button>
+            </header>
 
-                <div className='grid min-h-0 flex-1 sm:grid-cols-[180px_1fr]'>
+            <div className='grid min-h-0 flex-1 sm:grid-cols-[180px_1fr]'>
                     <nav aria-label='Settings sections' className='flex gap-2 overflow-x-auto border-b border-white/10 p-3 sm:flex-col sm:border-b-0 sm:border-r'>
                         {SECTIONS.map((item) => (
                             <button
@@ -125,7 +141,7 @@ const SettingsPanel = ({ onClose, onLogout }) => {
                         </button>
                     </nav>
 
-                    <div className='overflow-y-auto p-5'>
+                    <div className='overflow-y-auto p-4 sm:p-5'>
                         {section === 'Profile' && (
                             <form onSubmit={saveProfile} className='mx-auto max-w-md space-y-4'>
                                 <div className='flex flex-col items-center gap-3 pb-2'>
@@ -211,8 +227,7 @@ const SettingsPanel = ({ onClose, onLogout }) => {
                         )}
                     </div>
                 </div>
-            </section>
-        </div>
+        </section>
     );
 };
 

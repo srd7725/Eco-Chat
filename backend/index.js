@@ -5,7 +5,7 @@ import connectDB from "./config/database.js";
 import userRoute from "./routes/userRoute.js";
 import messageRoute from "./routes/messageRoute.js";
 import statusRoute from "./routes/statusRoute.js";
-import { profileUploadsDirectory } from "./middleware/imageUpload.js";
+import { messageUploadsDirectory, profileUploadsDirectory } from "./middleware/imageUpload.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { app,server } from "./socket/socket.js";
@@ -24,6 +24,10 @@ const corsOption={
 };
 app.use(cors(corsOption)); 
 app.use("/uploads/profile", express.static(profileUploadsDirectory, {
+    fallthrough: false,
+    maxAge: "1d"
+}));
+app.use("/uploads/message", express.static(messageUploadsDirectory, {
     fallthrough: false,
     maxAge: "1d"
 }));

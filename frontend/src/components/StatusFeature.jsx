@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
@@ -39,6 +39,7 @@ const StatusFeature = () => {
         [statuses]
     );
     const dispatch = useDispatch();
+    const [isStatusPanelOpen, setIsStatusPanelOpen] = useState(false);
     const [isComposerOpen, setIsComposerOpen] = useState(false);
     const [text, setText] = useState('');
     const [imageFile, setImageFile] = useState(null);
@@ -258,59 +259,82 @@ const StatusFeature = () => {
     };
 
     return (
-        <section className='mb-3 border-b border-white/10 pb-3 text-white'>
-            <div className='mb-2 flex items-center justify-between'>
-                <h2 className='text-sm font-semibold'>Status</h2>
+        <section className='mb-3 text-white'>
+            {!isStatusPanelOpen ? (
                 <button
                     type='button'
-                    onClick={() => setIsComposerOpen(true)}
-                    className='rounded-md border border-white/20 px-2 py-1 text-xs hover:bg-white/10'
+                    onClick={() => setIsStatusPanelOpen(true)}
+                    className='flex w-full items-center justify-center rounded-md border border-white/15 bg-slate-800/80 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700/80'
                 >
-                    + Add Status
+                    Status
                 </button>
-            </div>
-
-            <button
-                type='button'
-                onClick={() => ownStatusGroup ? openStatus(ownStatusGroup) : setIsComposerOpen(true)}
-                className='flex w-full items-center gap-3 rounded-md p-2 text-left hover:bg-white/10'
-            >
-                <div className='avatar'>
-                    <div className={`w-11 rounded-full ${ownStatusGroup ? 'ring-2 ring-green-400 ring-offset-2 ring-offset-zinc-900' : ''}`}>
-                        <ProfileAvatar user={authUser} alt='My profile' />
+            ) : (
+                <div className='rounded-xl border border-white/10 bg-slate-900/80 p-3 shadow-lg'>
+                    <div className='mb-3 flex items-center gap-2'>
+                        <button
+                            type='button'
+                            onClick={() => setIsStatusPanelOpen(false)}
+                            className='rounded px-2 py-1 text-base hover:bg-white/10'
+                            aria-label='Back to conversations'
+                        >
+                            ←
+                        </button>
+                        <span className='text-sm font-semibold'>Status</span>
                     </div>
-                </div>
-                <span className='min-w-0 flex-1'>
-                    <span className='block truncate text-sm font-medium'>My Status</span>
-                    <span className='block truncate text-xs opacity-65'>
-                        {ownStatusGroup
-                            ? formatStatusTime(ownStatusGroup.statuses[ownStatusGroup.statuses.length - 1].createdAt)
-                            : 'Tap to add a status'}
-                    </span>
-                </span>
-            </button>
 
-            {contactStatusGroups.map((group) => {
-                const latestStatus = group.statuses[group.statuses.length - 1];
-                return (
-                    <button
-                        key={getUserId(group.user)}
-                        type='button'
-                        onClick={() => openStatus(group)}
-                        className='flex w-full items-center gap-3 rounded-md p-2 text-left hover:bg-white/10'
-                    >
-                        <div className='avatar'>
-                            <div className='w-11 rounded-full ring-2 ring-green-400 ring-offset-2 ring-offset-zinc-900'>
-                                <ProfileAvatar user={group.user} alt={`${group.user.fullName} profile`} />
+                    <div className='space-y-4'>
+                        <div className='rounded-lg border border-white/10 bg-white/5 p-2'>
+                            <p className='mb-2 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-300'>My Status</p>
+                            <button
+                                type='button'
+                                onClick={() => ownStatusGroup ? openStatus(ownStatusGroup) : setIsComposerOpen(true)}
+                                className='flex w-full items-center gap-3 rounded-md p-2 text-left hover:bg-white/10'
+                            >
+                                <div className='avatar'>
+                                    <div className={`w-12 rounded-full ${ownStatusGroup ? 'ring-2 ring-green-400 ring-offset-2 ring-offset-zinc-900' : ''}`}>
+                                        <ProfileAvatar user={authUser} alt='My profile' />
+                                    </div>
+                                </div>
+                                <span className='min-w-0 flex-1'>
+                                    <span className='block truncate text-sm font-medium'>My Status</span>
+                                    <span className='block truncate text-xs opacity-65'>
+                                        {ownStatusGroup
+                                            ? `${formatStatusTime(ownStatusGroup.statuses[ownStatusGroup.statuses.length - 1].createdAt)} • Views: ${ownStatusGroup.statuses[ownStatusGroup.statuses.length - 1].viewCount || 0}`
+                                            : 'Tap to add a status'}
+                                    </span>
+                                </span>
+                            </button>
+                        </div>
+
+                        <div>
+                            <p className='mb-2 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-300'>Recent Updates</p>
+                            <div className='space-y-1'>
+                                {contactStatusGroups.map((group) => {
+                                    const latestStatus = group.statuses[group.statuses.length - 1];
+                                    return (
+                                        <button
+                                            key={getUserId(group.user)}
+                                            type='button'
+                                            onClick={() => openStatus(group)}
+                                            className='flex w-full items-center gap-3 rounded-md p-2 text-left hover:bg-white/10'
+                                        >
+                                            <div className='avatar'>
+                                                <div className='w-11 rounded-full ring-2 ring-green-400 ring-offset-2 ring-offset-zinc-900'>
+                                                    <ProfileAvatar user={group.user} alt={`${group.user.fullName} profile`} />
+                                                </div>
+                                            </div>
+                                            <span className='min-w-0 flex-1'>
+                                                <span className='block truncate text-sm font-medium'>{group.user.fullName}</span>
+                                                <span className='block truncate text-xs opacity-65'>{formatStatusTime(latestStatus.createdAt)}</span>
+                                            </span>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
-                        <span className='min-w-0 flex-1'>
-                            <span className='block truncate text-sm font-medium'>{group.user.fullName}</span>
-                            <span className='block truncate text-xs opacity-65'>{formatStatusTime(latestStatus.createdAt)}</span>
-                        </span>
-                    </button>
-                );
-            })}
+                    </div>
+                </div>
+            )}
 
             {isComposerOpen && (
                 <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4'>
