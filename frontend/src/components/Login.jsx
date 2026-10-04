@@ -36,37 +36,32 @@ const Login = () => {
     })
   }
   return (
-    <div className="min-w-200 mx-auto">
-      <div className='w-full p-6 rounded-lg shadow-md bg-gray-600 bg-clip-padding backdrop-filter backdrop-blur-md bg-opacity-10 border border-gray-100'>
-        <h1 className='text-3xl font-bold text-center'>Login</h1>
-        <form onSubmit={onSubmitHandler} action="">
-
+    <div className="mx-auto w-full max-w-sm">
+      <div className='w-full rounded-lg border border-white/60 bg-gray-900/40 p-5 text-white shadow-xl backdrop-blur-md'>
+        <h1 className='mb-4 text-center text-2xl font-bold'>Login</h1>
+        <form onSubmit={onSubmitHandler} action="" className='space-y-3'>
           <div>
-            <label className='label p-2'>
-              <span className='text-base label-text'>Username</span>
-            </label>
+            <label htmlFor="username" className='mb-1 block text-sm font-medium'>Username</label>
             <input
+              id="username"
               value={user.username}
               onChange={(e) => setUser({ ...user, username: e.target.value })}
-              className='w-full input input-bordered h-10'
+              className='h-10 w-full rounded-md border border-white/25 bg-zinc-900/60 px-3 text-sm text-white placeholder:text-white/55 focus:border-white/60 focus:outline-none focus:ring-1 focus:ring-white/50'
               type="text"
               placeholder='Username' />
           </div>
           <div>
-            <label className='label p-2'>
-              <span className='text-base label-text'>Password</span>
-            </label>
+            <label htmlFor="password" className='mb-1 block text-sm font-medium'>Password</label>
             <input
+              id="password"
               value={user.password}
               onChange={(e) => setUser({ ...user, password: e.target.value })}
-              className='w-full input input-bordered h-10'
+              className='h-10 w-full rounded-md border border-white/25 bg-zinc-900/60 px-3 text-sm text-white placeholder:text-white/55 focus:border-white/60 focus:outline-none focus:ring-1 focus:ring-white/50'
               type="password"
               placeholder='Password' />
           </div>
-          <p className='text-center my-2'>Don't have an account? <Link to="/signup"> signup </Link></p>
-          <div>
-            <button type="submit" className='btn btn-block btn-sm mt-2 border border-slate-700'>Login</button>
-          </div>
+          <p className='py-1 text-center text-sm'>Don't have an account? <Link className='font-medium underline underline-offset-2 hover:text-white/80' to="/signup">signup</Link></p>
+          <button type="submit" className='h-10 w-full rounded-md border border-white/50 bg-white/10 text-sm font-semibold text-white transition-colors hover:bg-white/20'>Login</button>
         </form>
       </div>
     </div>
