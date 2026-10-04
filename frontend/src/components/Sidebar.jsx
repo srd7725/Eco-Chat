@@ -1,16 +1,20 @@
 import React, { useState } from 'react'
 import { BiSearchAlt2 } from "react-icons/bi";
 import OtherUsers from './OtherUsers';
+import StatusFeature from './StatusFeature';
+import SettingsPanel from './SettingsPanel';
 import axios from "axios";
 import toast from "react-hot-toast";
 import {useNavigate} from "react-router-dom";
 import {useSelector, useDispatch} from "react-redux";
 import { setAuthUser, setOtherUsers, setSelectedUser } from '../redux/userSlice';
 import { setMessages } from '../redux/messageSlice';
+import { clearStatuses } from '../redux/statusSlice';
 import { BASE_URL } from '..';
  
 const Sidebar = () => {
     const [search, setSearch] = useState("");
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const {otherUsers} = useSelector(store=>store.user);
     const dispatch = useDispatch();
 
@@ -25,6 +29,7 @@ const Sidebar = () => {
             dispatch(setMessages(null));
             dispatch(setOtherUsers(null));
             dispatch(setSelectedUser(null));
+            dispatch(clearStatuses());
         } catch (error) {
             console.log(error);
         }
@@ -49,11 +54,19 @@ const Sidebar = () => {
                     <BiSearchAlt2 className='w-6 h-6 outline-none'/>
                 </button>
             </form>
-            <div className="divider px-3"></div> 
+            <div className="divider px-3"></div>
+            <StatusFeature />
             <OtherUsers search={search} />
-            <div className='mt-2'>
+            <div className='mt-2 flex gap-2'>
+                <button onClick={() => setIsSettingsOpen(true)} className='btn btn-sm'>Settings</button>
                 <button onClick={logoutHandler} className='btn btn-sm'>Logout</button>
             </div>
+            {isSettingsOpen && (
+                <SettingsPanel
+                    onClose={() => setIsSettingsOpen(false)}
+                    onLogout={logoutHandler}
+                />
+            )}
         </div>
     )
 }

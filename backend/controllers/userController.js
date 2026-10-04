@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import { Message } from "../models/messageModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { deleteUploadedImage, storeUploadedImage } from "../middleware/imageUpload.js";
+import { emitToAllUsers } from "../socket/socket.js";
 
 export const register = async (req, res) => {
     try {
@@ -125,3 +127,95 @@ export const getOtherUsers = async (req, res) => {
         console.log(error);
     }
 }
+
+const getPublicUser = (user) => ({
+    _id: user._id,
+    fullName: user.fullName,
+    username: user.username,
+    profilePhoto: user.profilePhoto || ""
+});
+
+export const updateProfile = async (req, res) => {
+    let newPhotoPath;
+    try {
+        const fullName = typeof req.body.fullName === "string" ? req.body.fullName.trim() : "";
+        const username = typeof req.body.username === "string" ? req.body.username.trim() : "";
+        if (!fullName || fullName.length > 80) {
+            return res.status(400).json({ message: "Full name is required and must be 80 characters or fewer." });
+        }
+        if (!username || username.length > 30) {
+            return res.status(400).json({ message: "Username is required and must be 30 characters or fewer." });
+        }
+
+        const existingUser = await User.findById(req.id);
+        if (!existingUser) return res.status(404).json({ message: "User not found." });
+
+        const usernameTaken = await User.exists({
+            username,
+            _id: { $ne: existingUser._id }
+        });
+        if (usernameTaken) {
+            return res.status(409).json({ message: "That username is already in use." });
+        }
+
+        if (req.file) {
+            newPhotoPath = await storeUploadedImage(req.file);
+        }
+        const previousPhoto = existingUser.profilePhoto;
+        existingUser.fullName = fullName;
+        existingUser.username = username;
+        if (newPhotoPath) existingUser.profilePhoto = newPhotoPath;
+        await existingUser.save();
+
+        const savedPhotoPath = newPhotoPath;
+        newPhotoPath = null;
+        if (savedPhotoPath && previousPhoto && previousPhoto !== savedPhotoPath) {
+            try {
+                await deleteUploadedImage(previousPhoto);
+            } catch (cleanupError) {
+                console.error("Unable to remove the previous profile image:", cleanupError);
+            }
+        }
+        const profile = getPublicUser(existingUser);
+        emitToAllUsers("profileUpdated", profile);
+        return res.status(200).json({ user: profile });
+    } catch (error) {
+        if (newPhotoPath) {
+            try {
+                await deleteUploadedImage(newPhotoPath);
+            } catch (cleanupError) {
+                console.error("Unable to remove an unreferenced profile image:", cleanupError);
+            }
+        }
+        if (error.code === 11000) {
+            return res.status(409).json({ message: "That username is already in use." });
+        }
+        console.error("Failed to update profile:", error);
+        return res.status(error.statusCode || 500).json({
+            message: error.statusCode ? error.message : "Unable to update profile."
+        });
+    }
+};
+
+export const removeProfilePhoto = async (req, res) => {
+    try {
+        const user = await User.findById(req.id);
+        if (!user) return res.status(404).json({ message: "User not found." });
+        const previousPhoto = user.profilePhoto;
+        user.profilePhoto = "";
+        await user.save();
+
+        try {
+            await deleteUploadedImage(previousPhoto);
+        } catch (error) {
+            console.error("Unable to remove the previous profile image:", error);
+        }
+
+        const profile = getPublicUser(user);
+        emitToAllUsers("profileUpdated", profile);
+        return res.status(200).json({ user: profile });
+    } catch (error) {
+        console.error("Failed to remove profile photo:", error);
+        return res.status(500).json({ message: "Unable to remove profile photo." });
+    }
+};

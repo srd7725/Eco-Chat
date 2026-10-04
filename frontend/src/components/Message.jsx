@@ -2,6 +2,22 @@ import React, { useEffect, useRef } from 'react'
 import {useSelector} from "react-redux";
 import ProfileAvatar from './ProfileAvatar';
 
+const formatMessageTime = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) return '';
+
+    const today = new Date();
+    if (date.toDateString() === today.toDateString()) {
+        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+    const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) return `Yesterday, ${time}`;
+    return `${date.toLocaleDateString()}, ${time}`;
+};
+
 const Message = ({message}) => {
     const scroll = useRef();
     const {authUser,selectedUser} = useSelector(store=>store.user);
@@ -17,10 +33,12 @@ const Message = ({message}) => {
                     <ProfileAvatar user={message?.senderId === authUser?._id ? authUser : selectedUser} />
                 </div>
             </div>
-            <div className="chat-header">
-                <time className="text-xs opacity-50 text-white">12:45</time>
+            <div className={`chat-bubble ${message?.senderId !== authUser?._id ? 'bg-gray-200 text-black' : ''}`}>
+                <p className='whitespace-pre-wrap break-words'>{message?.message}</p>
+                <time dateTime={message?.createdAt} className='mt-1 block text-right text-[10px] leading-tight opacity-60'>
+                    {formatMessageTime(message?.createdAt)}
+                </time>
             </div>
-            <div className={`chat-bubble ${message?.senderId !== authUser?._id ? 'bg-gray-200 text-black' : ''} `}>{message?.message}</div>
         </div>
     )
 }

@@ -57,6 +57,18 @@ const userSlice = createSlice({
             user.lastMessage = message;
             sortByLatestMessage(state.otherUsers);
         },
+        updateUserProfile:(state, action)=>{
+            const updatedUser = action.payload;
+            const updatedId = getId(updatedUser._id);
+            const mergeProfile = (user) => {
+                if (user && getId(user._id) === updatedId) {
+                    Object.assign(user, updatedUser);
+                }
+            };
+            mergeProfile(state.authUser);
+            mergeProfile(state.selectedUser);
+            state.otherUsers?.forEach(mergeProfile);
+        },
         setSelectedUser:(state,action)=>{
             state.selectedUser = action.payload;
         },
@@ -69,6 +81,7 @@ export const {
     setAuthUser,
     setOtherUsers,
     updateConversationLastMessage,
+    updateUserProfile,
     setSelectedUser,
     setOnlineUsers
 } = userSlice.actions;
