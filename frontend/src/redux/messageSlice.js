@@ -29,13 +29,33 @@ const messageSlice = createSlice({
                 state.messages = [message];
                 return;
             }
-            if (state.messages.some((existingMessage) => existingMessage._id === message._id)) {
+            if (state.messages.some((existingMessage) => String(existingMessage._id) === String(message._id))) {
                 return;
             }
             state.messages.push(message);
             sortMessages(state.messages);
+        },
+        updateMessageReaction:(state, action)=>{
+            const { messageId, message } = action.payload || {};
+            if (!state.messages || !messageId || !message) return;
+
+            const existingMessageIndex = state.messages.findIndex(
+                (existingMessage) => String(existingMessage._id) === String(messageId)
+            );
+
+            if (existingMessageIndex >= 0) {
+                state.messages[existingMessageIndex] = {
+                    ...state.messages[existingMessageIndex],
+                    ...message,
+                    reactions: message.reactions || state.messages[existingMessageIndex].reactions || []
+                };
+            } else {
+                state.messages.push(message);
+            }
+
+            sortMessages(state.messages);
         }
     }
 });
-export const {setMessages,mergeMessages,appendMessage} = messageSlice.actions;
+export const {setMessages,mergeMessages,appendMessage,updateMessageReaction} = messageSlice.actions;
 export default messageSlice.reducer;

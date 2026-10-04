@@ -7,7 +7,8 @@ import { useEffect, useState } from 'react';
 import {useSelector,useDispatch} from "react-redux";
 import io from "socket.io-client";
 import { setSocket } from './redux/socketSlice';
-import { setOnlineUsers } from './redux/userSlice';
+import { setOnlineUsers, updateUserProfile } from './redux/userSlice';
+import { updateStatusOwnerProfile } from './redux/statusSlice';
 import { BASE_URL } from '.';
 
 const router = createBrowserRouter([
@@ -33,15 +34,15 @@ function App() {
 
   useEffect(()=>{
     if(authUser){
-      const socketio = io(`${BASE_URL}`, {
-          query:{
-            userId:authUser._id
-          }
-      });
+      const socketio = io(`${BASE_URL}`, { withCredentials: true });
       dispatch(setSocket(socketio));
 
       socketio?.on('getOnlineUsers', (onlineUsers)=>{
         dispatch(setOnlineUsers(onlineUsers))
+      });
+      socketio?.on('profileUpdated', (profile) => {
+        dispatch(updateUserProfile(profile));
+        dispatch(updateStatusOwnerProfile(profile));
       });
       return () => socketio.close();
     }else{
@@ -51,7 +52,7 @@ function App() {
       }
     }
 
-  },[authUser]);
+  },[authUser, dispatch]);
 
   return (
     <div className="p-4 h-screen flex items-center justify-center">

@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
 import fallbackAvatar from '../assets/avatar-fallback.svg';
+import { BASE_URL } from '..';
+
+export const resolveImageUrl = (imagePath) => (
+    typeof imagePath === 'string' && imagePath.startsWith('/uploads/')
+        ? `${BASE_URL}${imagePath}`
+        : typeof imagePath === 'string' && imagePath.startsWith('/api/')
+            ? `${BASE_URL}${imagePath}`
+            : imagePath
+);
 
 const getAvatarUrl = (user) => {
     const profilePhoto = user?.profilePhoto;
     if (profilePhoto && !profilePhoto.includes('avatar.iran.liara.run')) {
-        return profilePhoto;
+        return resolveImageUrl(profilePhoto);
     }
 
     const seed = encodeURIComponent(user?.username || user?.fullName || 'user');

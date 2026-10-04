@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import {useSelector, useDispatch} from "react-redux";
-import { appendMessage } from "../redux/messageSlice";
+import { appendMessage, updateMessageReaction } from "../redux/messageSlice";
 import { updateConversationLastMessage } from "../redux/userSlice";
 
 const getId = (id) => String(id?._id || id || "");
@@ -25,8 +25,28 @@ const useGetRealTimeMessage = () => {
             }
         };
 
+        const handleMessageReaction = ({ messageId, message }) => {
+            if (!messageId || !message) return;
+            dispatch(updateMessageReaction({ messageId, message }));
+        };
+
+        const handleMessageDeleted = ({ messageId, message }) => {
+            if (!messageId || !message) return;
+            dispatch(updateMessageReaction({ messageId, message }));
+            dispatch(updateConversationLastMessage({
+                message,
+                currentUserId: authUser?._id
+            }));
+        };
+
         socket.on("newMessage", handleNewMessage);
-        return () => socket.off("newMessage", handleNewMessage);
+        socket.on("messageReactionUpdated", handleMessageReaction);
+        socket.on("messageDeleted", handleMessageDeleted);
+        return () => {
+            socket.off("newMessage", handleNewMessage);
+            socket.off("messageReactionUpdated", handleMessageReaction);
+            socket.off("messageDeleted", handleMessageDeleted);
+        };
     }, [socket, authUser?._id, selectedUser?._id, dispatch]);
 };
 export default useGetRealTimeMessage;
