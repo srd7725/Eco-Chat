@@ -31,10 +31,8 @@ const Sidebar = () => {
     }
     const searchSubmitHandler = (e) => {
         e.preventDefault();
-        const conversationUser = otherUsers?.find((user)=> user.fullName.toLowerCase().includes(search.toLowerCase()));
-        if(conversationUser){
-            dispatch(setOtherUsers([conversationUser]));
-        }else{
+        const conversationUser = otherUsers?.find((user)=> user.fullName?.toLowerCase().includes(search.toLowerCase()));
+        if (!conversationUser && search.trim()) {
             toast.error("User not found!");
         }
     }
@@ -52,7 +50,7 @@ const Sidebar = () => {
                 </button>
             </form>
             <div className="divider px-3"></div> 
-            <OtherUsers/> 
+            <OtherUsers search={search} />
             <div className='mt-2'>
                 <button onClick={logoutHandler} className='btn btn-sm'>Logout</button>
             </div>

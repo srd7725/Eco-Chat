@@ -1,4 +1,6 @@
 import { User } from "../models/userModel.js";
+import mongoose from "mongoose";
+import { Message } from "../models/messageModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -18,15 +20,13 @@ export const register = async (req, res) => {
         }
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // profilePhoto
-        const maleProfilePhoto = `https://avatar.iran.liara.run/public/boy?username=${username}`;
-        const femaleProfilePhoto = `https://avatar.iran.liara.run/public/girl?username=${username}`;
+        const profilePhoto = `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
 
         await User.create({
             fullName,
             username,
             password: hashedPassword,
-            profilePhoto: gender === "male" ? maleProfilePhoto : femaleProfilePhoto,
+            profilePhoto,
             gender
         });
         return res.status(201).json({
@@ -86,8 +86,41 @@ export const logout = (req, res) => {
 export const getOtherUsers = async (req, res) => {
     try {
         const loggedInUserId = req.id;
-        const otherUsers = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
-        return res.status(200).json(otherUsers);
+        const currentUserObjectId = new mongoose.Types.ObjectId(loggedInUserId);
+        const [otherUsers, latestMessages] = await Promise.all([
+            User.find({ _id: { $ne: currentUserObjectId } }).select("-password").lean(),
+            Message.aggregate([
+                {
+                    $match: {
+                        $or: [
+                            { senderId: currentUserObjectId },
+                            { receiverId: currentUserObjectId }
+                        ]
+                    }
+                },
+                { $sort: { createdAt: -1, _id: -1 } },
+                {
+                    $group: {
+                        _id: {
+                            $cond: [
+                                { $eq: ["$senderId", currentUserObjectId] },
+                                "$receiverId",
+                                "$senderId"
+                            ]
+                        },
+                        lastMessage: { $first: "$$ROOT" }
+                    }
+                }
+            ])
+        ]);
+        const latestMessageByUserId = new Map(
+            latestMessages.map(({ _id, lastMessage }) => [_id.toString(), lastMessage])
+        );
+        const usersWithLatestMessages = otherUsers.map((user) => ({
+            ...user,
+            lastMessage: latestMessageByUserId.get(user._id.toString()) || null
+        }));
+        return res.status(200).json(usersWithLatestMessages);
     } catch (error) {
         console.log(error);
     }

@@ -47,7 +47,10 @@ export const getMessage = async (req,res) => {
         const senderId = req.id;
         const conversation = await Conversation.findOne({
             participants:{$all : [senderId, receiverId]}
-        }).populate("messages"); 
+        }).populate({
+            path: "messages",
+            options: { sort: { createdAt: 1, _id: 1 } }
+        });
         return res.status(200).json(conversation?.messages);
     } catch (error) {
         console.log(error);
