@@ -2,14 +2,14 @@ import React, {useState } from 'react'
 import { IoSend } from "react-icons/io5";
 import axios from "axios";
 import {useDispatch,useSelector} from "react-redux";
-import { setMessages } from '../redux/messageSlice';
+import { appendMessage } from '../redux/messageSlice';
+import { updateConversationLastMessage } from '../redux/userSlice';
 import { BASE_URL } from '..';
 
 const SendInput = () => {
     const [message, setMessage] = useState("");
     const dispatch = useDispatch();
-    const {selectedUser} = useSelector(store=>store.user);
-    const {messages} = useSelector(store=>store.message);
+    const {selectedUser, authUser} = useSelector(store=>store.user);
 
     const onSubmitHandler = async (e) => {
         e.preventDefault();
@@ -20,7 +20,14 @@ const SendInput = () => {
                 },
                 withCredentials:true
             });
-            dispatch(setMessages([...messages, res?.data?.newMessage]))
+            const newMessage = res?.data?.newMessage;
+            if (newMessage) {
+                dispatch(appendMessage(newMessage));
+                dispatch(updateConversationLastMessage({
+                    message: newMessage,
+                    currentUserId: authUser?._id
+                }));
+            }
         } catch (error) {
             console.log(error);
         } 
