@@ -30,7 +30,7 @@ const formatStatusTime = (timestamp) => {
     return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${time}`;
 };
 
-const StatusFeature = () => {
+const StatusFeature = ({ isOpen = false, onOpen, onClose }) => {
     const { authUser } = useSelector((store) => store.user);
     const { socket } = useSelector((store) => store.socket);
     const statuses = useSelector((store) => store.status.statuses);
@@ -39,7 +39,6 @@ const StatusFeature = () => {
         [statuses]
     );
     const dispatch = useDispatch();
-    const [isStatusPanelOpen, setIsStatusPanelOpen] = useState(false);
     const [isComposerOpen, setIsComposerOpen] = useState(false);
     const [text, setText] = useState('');
     const [imageFile, setImageFile] = useState(null);
@@ -259,21 +258,21 @@ const StatusFeature = () => {
     };
 
     return (
-        <section className='mb-3 text-white'>
-            {!isStatusPanelOpen ? (
+        <section className={`text-white ${isOpen ? 'flex min-h-0 flex-1 flex-col' : 'mb-3'}`}>
+            {!isOpen ? (
                 <button
                     type='button'
-                    onClick={() => setIsStatusPanelOpen(true)}
+                    onClick={onOpen}
                     className='flex w-full items-center justify-center rounded-md border border-white/15 bg-slate-800/80 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700/80'
                 >
                     Status
                 </button>
             ) : (
-                <div className='rounded-xl border border-white/10 bg-slate-900/80 p-3 shadow-lg'>
+                <div className='flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-900/80 p-3 shadow-lg'>
                     <div className='mb-3 flex items-center gap-2'>
                         <button
                             type='button'
-                            onClick={() => setIsStatusPanelOpen(false)}
+                            onClick={onClose}
                             className='rounded px-2 py-1 text-base hover:bg-white/10'
                             aria-label='Back to conversations'
                         >
@@ -282,7 +281,7 @@ const StatusFeature = () => {
                         <span className='text-sm font-semibold'>Status</span>
                     </div>
 
-                    <div className='space-y-4'>
+                    <div className='min-h-0 flex-1 space-y-4 overflow-y-auto'>
                         <div className='rounded-lg border border-white/10 bg-white/5 p-2'>
                             <p className='mb-2 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-300'>My Status</p>
                             <button

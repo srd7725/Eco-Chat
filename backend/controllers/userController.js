@@ -8,9 +8,19 @@ import { emitToAllUsers } from "../socket/socket.js";
 
 export const register = async (req, res) => {
     try {
-        const { fullName, username, password, confirmPassword, gender } = req.body;
+        const { fullName, username, password, confirmPassword } = req.body;
+        const gender = typeof req.body.gender === "string" ? req.body.gender.trim().toLowerCase() : "";
         if (!fullName || !username || !password || !confirmPassword || !gender) {
             return res.status(400).json({ message: "All fields are required" });
+        }
+        if (gender !== "male" && gender !== "female") {
+            return res.status(400).json({ message: "Choose a valid gender." });
+        }
+        if (typeof password !== "string" || password.length < 6) {
+            return res.status(400).json({ message: "Password must be at least 6 characters long." });
+        }
+        if (password.length > 15) {
+            return res.status(400).json({ message: "Password must not exceed 15 characters." });
         }
         if (password !== confirmPassword) {
             return res.status(400).json({ message: "Password do not match" });
@@ -22,7 +32,8 @@ export const register = async (req, res) => {
         }
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const profilePhoto = `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
+        const avatarTop = gender === "male" ? "shortFlat" : "straight02";
+        const profilePhoto = `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(username)}&top=${avatarTop}&topProbability=100`;
 
         await User.create({
             fullName,
@@ -69,7 +80,8 @@ export const login = async (req, res) => {
             _id: user._id,
             username: user.username,
             fullName: user.fullName,
-            profilePhoto: user.profilePhoto
+            profilePhoto: user.profilePhoto,
+            gender: user.gender
         });
 
     } catch (error) {
@@ -132,7 +144,8 @@ const getPublicUser = (user) => ({
     _id: user._id,
     fullName: user.fullName,
     username: user.username,
-    profilePhoto: user.profilePhoto || ""
+    profilePhoto: user.profilePhoto || "",
+    gender: user.gender || ""
 });
 
 export const updateProfile = async (req, res) => {

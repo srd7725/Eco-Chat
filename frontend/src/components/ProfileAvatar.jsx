@@ -10,14 +10,24 @@ export const resolveImageUrl = (imagePath) => (
             : imagePath
 );
 
-const getAvatarUrl = (user) => {
+export const getAvatarUrl = (user) => {
     const profilePhoto = user?.profilePhoto;
-    if (profilePhoto && !profilePhoto.includes('avatar.iran.liara.run')) {
+    const isGeneratedAvatar = typeof profilePhoto === 'string' && (
+        profilePhoto.includes('avatar.iran.liara.run') ||
+        profilePhoto.includes('api.dicebear.com')
+    );
+    if (profilePhoto && !isGeneratedAvatar) {
         return resolveImageUrl(profilePhoto);
     }
 
-    const seed = encodeURIComponent(user?.username || user?.fullName || 'user');
-    return `https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}`;
+    const gender = typeof user?.gender === 'string' ? user.gender.trim().toLowerCase() : '';
+    if (gender !== 'male' && gender !== 'female') {
+        return profilePhoto ? resolveImageUrl(profilePhoto) : fallbackAvatar;
+    }
+
+    const top = gender === 'male' ? 'shortFlat' : 'straight02';
+    const seed = encodeURIComponent(user?.username || 'user');
+    return `https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}&top=${top}&topProbability=100`;
 };
 
 const ProfileAvatar = ({ user, alt = 'User avatar' }) => {

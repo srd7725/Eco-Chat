@@ -13,12 +13,27 @@ const Signup = () => {
     confirmPassword: "",
     gender: "",
   });
+  const [passwordError, setPasswordError] = useState("");
   const navigate = useNavigate();
   const handleCheckbox = (gender) => {
     setUser({ ...user, gender });
   }
   const onSubmitHandler = async (e) => {
     e.preventDefault();
+    if (user.password.length < 6) {
+      const message = "Password must be at least 6 characters long.";
+      setPasswordError(message);
+      toast.error(message);
+      return;
+    }
+    if (user.password.length > 15) {
+      const message = "Password must not exceed 15 characters.";
+      setPasswordError(message);
+      toast.error(message);
+      return;
+    }
+
+    setPasswordError("");
     try {
       const res = await axios.post(`${BASE_URL}/api/v1/user/register`, user, {
         headers: {
@@ -72,10 +87,21 @@ const Signup = () => {
             <input
               id="password"
               value={user.password}
-              onChange={(e) => setUser({ ...user, password: e.target.value })}
+              onChange={(e) => {
+                const password = e.target.value;
+                setUser({ ...user, password });
+                setPasswordError(
+                  password.length < 6
+                    ? "Password must be at least 6 characters long."
+                    : password.length > 15
+                      ? "Password must not exceed 15 characters."
+                      : ""
+                );
+              }}
               className='h-10 w-full rounded-md border border-white/25 bg-zinc-900/60 px-3 text-sm text-white placeholder:text-white/55 focus:border-white/60 focus:outline-none focus:ring-1 focus:ring-white/50'
               type="password"
               placeholder='Password' />
+            {passwordError && <p className='mt-1 text-xs text-red-300'>{passwordError}</p>}
           </div>
           <div>
             <label htmlFor="confirmPassword" className='mb-1 block text-sm font-medium'>Confirm Password</label>
