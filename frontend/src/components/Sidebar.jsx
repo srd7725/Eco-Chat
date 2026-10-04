@@ -1,34 +1,14 @@
 import React, { useState } from 'react'
 import { BiSearchAlt2 } from "react-icons/bi";
 import OtherUsers from './OtherUsers';
-import axios from "axios";
+import StatusFeature from './StatusFeature';
 import toast from "react-hot-toast";
-import {useNavigate} from "react-router-dom";
-import {useSelector, useDispatch} from "react-redux";
-import { setAuthUser, setOtherUsers, setSelectedUser } from '../redux/userSlice';
-import { setMessages } from '../redux/messageSlice';
-import { BASE_URL } from '..';
+import {useSelector} from "react-redux";
  
-const Sidebar = () => {
+const Sidebar = ({ onOpenSettings, onLogout }) => {
     const [search, setSearch] = useState("");
     const {otherUsers} = useSelector(store=>store.user);
-    const dispatch = useDispatch();
 
-    const navigate = useNavigate();
-
-    const logoutHandler = async () => {
-        try {
-            const res = await axios.get(`${BASE_URL}/api/v1/user/logout`);
-            navigate("/login");
-            toast.success(res.data.message);
-            dispatch(setAuthUser(null));
-            dispatch(setMessages(null));
-            dispatch(setOtherUsers(null));
-            dispatch(setSelectedUser(null));
-        } catch (error) {
-            console.log(error);
-        }
-    }
     const searchSubmitHandler = (e) => {
         e.preventDefault();
         const conversationUser = otherUsers?.find((user)=> user.fullName?.toLowerCase().includes(search.toLowerCase()));
@@ -37,22 +17,25 @@ const Sidebar = () => {
         }
     }
     return (
-        <div className='border-r border-slate-500 p-4 flex flex-col'>
+        <div className='flex w-full max-w-[420px] flex-col border-r border-slate-500 bg-slate-900/40 p-4 shadow-inner backdrop-blur-sm md:min-w-[320px]'>
             <form onSubmit={searchSubmitHandler} action="" className='flex items-center gap-2'>
                 <input
                     value={search}
                     onChange={(e)=>setSearch(e.target.value)}
-                    className='input input-bordered rounded-md' type="text"
+                    className='w-full rounded-lg border border-slate-600 bg-slate-800/90 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30' type="text"
                     placeholder='Search...'
                 />
-                <button type='submit' className='btn bg-zinc-700 text-white'>
-                    <BiSearchAlt2 className='w-6 h-6 outline-none'/>
+                <button type='submit' className='flex h-10 w-10 items-center justify-center rounded-lg border border-slate-600 bg-zinc-700 text-white transition hover:bg-zinc-600'>
+                    <BiSearchAlt2 className='h-5 w-5 outline-none'/>
                 </button>
             </form>
-            <div className="divider px-3"></div> 
+            <div className='mt-3'>
+                <StatusFeature />
+            </div>
             <OtherUsers search={search} />
-            <div className='mt-2'>
-                <button onClick={logoutHandler} className='btn btn-sm'>Logout</button>
+            <div className='mt-3 flex gap-2 border-t border-white/10 pt-3'>
+                <button onClick={onOpenSettings} className='btn btn-sm flex-1'>Settings</button>
+                <button onClick={onLogout} className='btn btn-sm flex-1'>Logout</button>
             </div>
         </div>
     )

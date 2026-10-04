@@ -27,6 +27,23 @@ const OtherUser = ({ user }) => {
     const selectedUserHandler = (user) => {
         dispatch(setSelectedUser(user));
     }
+
+    const previewText = (() => {
+        if (!lastMessage) return '';
+        const isDeletedForEveryone = Boolean(lastMessage.deletedForEveryone);
+        const isDeletedForMe = (lastMessage.deletedFor || []).some(
+            (userId) => String(userId) === String(authUser?._id || '')
+        );
+
+        if (isDeletedForEveryone || isDeletedForMe) {
+            return 'This message was deleted';
+        }
+        if (lastMessage.messageType === 'image') return '📷 Photo';
+        if (lastMessage.messageType === 'file') return lastMessage.fileName || '📄 File';
+        if (lastMessage.message) return lastMessage.message;
+        return '';
+    })();
+
     return (
         <>
             <div onClick={() => selectedUserHandler(user)} className={` ${selectedUser?._id === user?._id ? 'bg-zinc-200 text-black' : 'text-white'} flex gap-2 hover:text-black items-center hover:bg-zinc-200 rounded p-2 cursor-pointer`}>
@@ -41,7 +58,7 @@ const OtherUser = ({ user }) => {
                         {lastMessage && <time className='shrink-0 text-xs opacity-70'>{formatMessageTime(lastMessage.createdAt)}</time>}
                     </div>
                     <p className='truncate text-xs opacity-75'>
-                        {lastMessage ? `${isOwnMessage ? 'You: ' : ''}${lastMessage.message}` : ''}
+                        {lastMessage ? `${isOwnMessage ? 'You: ' : ''}${previewText}` : ''}
                     </p>
                 </div>
             </div>

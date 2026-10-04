@@ -9,6 +9,7 @@
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.20.0",
+    "emoji-picker-react": "^4.22.3",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-hot-toast": "^2.6.1",
